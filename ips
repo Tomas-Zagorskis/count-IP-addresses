@@ -1,11 +1,17 @@
 #!/usr/bin/env lua
 
+print()
+print('\27[36m---------------------------------------------------------------------------------------------------')
+print("It's a program that receives two IPv4 addresses and returns the number of addresses between them")
+print('---------------------------------------------------------------------------------------------------\27[0m')
+print()
 --[[
 Splits and converts an IP String to a table of integers 
   
 param inputIp {string} An IP Address in the form a.b.c.d
 return {table} a table of integers representation of the IP address
 ]]
+
 local function splitIp(inputIp)
   local aTable={}
   local i = 1
@@ -24,11 +30,11 @@ param ip {string} An IP Address in the form a.b.c.d
 
 local function ipValidation(ip)
   if not string.match(ip, "^[%d]+%.[%d]+%.[%d]+%.[%d]+$") then
-    error('invalid ip format', 2)
+    error('\27[31m- invalid ip format\27[0m', 2)
   end
   for str in string.gmatch(ip, "[%d]+") do
     if tonumber(str) > 255 then
-      error("one of ip's fragment number is bigger then 255", 2)
+      error("\27[31m- one of ip's fragment number is bigger then 255\27[0m", 2)
     end
   end
 end
@@ -60,7 +66,7 @@ local function numberBetweenIps(ip1, ip2)
     multiply = multiply * 256
   end
   print('--------------------------------------')
-  io.write('- The number between ips is ', math.abs(numDiff), '\n')
+  io.write('\27[32m- The number between ips is ', math.abs(numDiff), '\27[0m\n')
   print()
 end
 
@@ -81,6 +87,10 @@ while not status2 do
   status2, err = pcall(ipValidation, input2)
   if not status2 then
     print(err)
+  end
+  if input1 == input2 then
+    print('\27[31m- both ips are the same\27[0m')
+    status2 = false
   end
 end
 numberBetweenIps(input1, input2)
