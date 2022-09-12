@@ -6,20 +6,26 @@ print("It's a program that receives two IPv4 addresses and returns the number of
 print('---------------------------------------------------------------------------------------------------\27[0m')
 print()
 --[[
-Splits and converts an IP String to a table of integers 
+Splits and converts an IP String to an integer 
   
 param inputIp {string} An IP Address in the form a.b.c.d
-return {table} a table of integers representation of the IP address
+return {int} a number of the IP address
 ]]
 
-local function splitIp(inputIp)
-  local aTable={}
+local function ipToInt(inputIp)
+  local ipTable={}
   local i = 1
   for str in string.gmatch(inputIp, "[%d]+") do
-    aTable[i] = tonumber(str)
+    ipTable[i] = tonumber(str)
     i = i + 1
   end
-  return aTable
+  local numOfIp = 0
+  local multiply = 1
+  for j = 4, 1, -1 do
+    numOfIp = numOfIp + ipTable[j] * multiply
+    multiply = multiply * 256
+  end
+  return numOfIp
 end
 
 --[[
@@ -42,55 +48,43 @@ end
 --[[
 Calculates the number of IP addresses between the first one and the second.
   
-@param ip1 {string} An IP Address in the form a.b.c.d
-@param ip2 {string} An IP Address in the form a.b.c.d
+param ip1 {integer} a number of IP address.
+param ip2 {integer} a number of IP address.
 ]]
 
 local function numberBetweenIps(ip1, ip2)
-  local ips1Table = splitIp(ip1)
-  local ips2Table = splitIp(ip2)
-  local diffIndex = 0
-  
-  for i = 1, 4 do
-    if (ips1Table[i] ~= ips2Table[i]) then
-      diffIndex = i
-      break
-    end
-  end
-
-  local numDiff = 0
-  local multiply = 1
-  
-  for j = 4, diffIndex, -1 do
-    numDiff = numDiff + (ips2Table[j] - ips1Table[j]) * multiply
-    multiply = multiply * 256
-  end
+  local numDiff = ip2 - ip1
   print('--------------------------------------')
-  io.write('\27[32m- The number between ips is ', math.abs(numDiff), '\27[0m\n')
+  io.write('\27[32m- The number between ips is ', numDiff, '\27[0m\n')
   print()
 end
 
 local status1 = false
 local status2 = false
-local err, input1, input2;
+local err, input1, input2, ip1Num, ip2Num;
 while not status1 do
   io.write('- Write first IPv4: ')
   input1 = io.read()
   status1, err = pcall(ipValidation, input1)
   if not status1 then
     print(err)
+  else
+    ip1Num = ipToInt(input1)
   end
 end
 while not status2 do
-  io.write('- Write second IPv4: ')
+  io.write('- Write second IPv4 (must be bigger): ')
   input2 = io.read()
   status2, err = pcall(ipValidation, input2)
   if not status2 then
     print(err)
-  end
-  if input1 == input2 then
-    print('\27[31m- both ips are the same\27[0m')
-    status2 = false
+  else
+    ip2Num = ipToInt(input2)
+    if ip1Num >= ip2Num then
+      print('\27[31m- please, write second IP bigger\27[0m')
+      status2 = false
+    else
+      numberBetweenIps(ip1Num, ip2Num)
+    end
   end
 end
-numberBetweenIps(input1, input2)
