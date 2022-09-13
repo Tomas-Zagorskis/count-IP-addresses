@@ -1,49 +1,35 @@
 #!/usr/bin/env lua
 
-print()
-print('\27[36m---------------------------------------------------------------------------------------------------')
-print("It's a program that receives two IPv4 addresses and returns the number of addresses between them")
-print('---------------------------------------------------------------------------------------------------\27[0m')
-print()
 --[[
-Splits and converts an IP String to an integer 
+Splits and converts an IP String to a table of integers 
   
-param inputIp {string} An IP Address in the form a.b.c.d
-return {int} a number of the IP address
+param inputIp {string} An IP Address
+param isIPv4 {boolean} true - IPv4, false - IPv6
+return {table} a table of integers representation of the IP address
 ]]
 
-local function ipToInt(inputIp)
+local function splitIp(inputIp, isIPv4)
   local ipTable={}
   local i = 1
-  for str in string.gmatch(inputIp, "[%d]+") do
-    ipTable[i] = tonumber(str)
-    i = i + 1
+  if isIPv4 then
+    for str in string.gmatch(inputIp, "[%d]+") do
+      ipTable[i] = tonumber(str)
+      i = i + 1
+    end
+  else
+    for str in string.gmatch(inputIp, "[%x]+") do
+      ipTable[i] = tonumber(str, 16)
+      i = i + 1
+    end
   end
-  local numOfIp = 0
-  local multiply = 1
-  for j = 4, 1, -1 do
-    numOfIp = numOfIp + ipTable[j] * multiply
-    multiply = multiply * 256
-  end
-  return numOfIp
+  return ipTable
 end
 
 --[[
-Ip validation
+IPv4 validation
 
 param ip {string} An IP Address in the form a.b.c.d
 ]]
-
-local function ip6Validation(ip)
-  if not string.match(ip, "^[%x]+:[%x]+:[%x]+:[%x]+:[%x]+:[%x]+:[%x]+:[%x]+$") then
-    error('\27[31m- invalid IPv6 format\27[0m', 2)
-  end
-  for str in string.gmatch(ip, "[%x]+") do
-    if string.len(str) > 4 then
-      error("\27[31m- invalid IPv6 format\27[0m", 2)
-    end
-  end
-end
 
 local function ip4Validation(ip)
   if not string.match(ip, "^[%d]+%.[%d]+%.[%d]+%.[%d]+$") then
@@ -52,50 +38,157 @@ local function ip4Validation(ip)
   for str in string.gmatch(ip, "[%d]+") do
     if tonumber(str) > 255 then
       error("\27[31m- one of ip's fragment number is bigger then 255\27[0m", 2)
+      end
     end
   end
-end
+
+  --[[
+IPv6 validation
+
+param ip {string} An IP Address in the form 1:2:3:4:5:6:7:8
+]]
+
+  local function ip6Validation(ip)
+    if not string.match(ip, "^[%x]+:[%x]+:[%x]+:[%x]+:[%x]+:[%x]+:[%x]+:[%x]+$") then
+      error('\27[31m- invalid IPv6 format\27[0m', 2)
+    end
+    for str in string.gmatch(ip, "[%x]+") do
+      if string.len(str) > 4 then
+        error("\27[31m- invalid IPv6 format\27[0m", 2)
+      end
+    end
+  end
+  
+--Second IP input validation (must be bigger)
+
+  local function isSecondInputBigger(num1, num2)
+    if num1 > num2 then
+      error('\27[31m- please, write second IP bigger\27[0m', 2)
+    end
+  end
 
 --[[
 Calculates the number of IP addresses between the first one and the second.
   
 param ip1 {integer} a number of IP address.
 param ip2 {integer} a number of IP address.
+param isIPv4 {boolean} true - IPv4, false - IPv6
+return {boolean} if there is no error returns - true
 ]]
 
-local function numberBetweenIps(ip1, ip2)
-  local numDiff = ip2 - ip1
-  print('--------------------------------------')
-  io.write('\27[32m- The number between ips is ', numDiff, '\27[0m\n')
-  print()
-end
-
-local status1 = false
-local status2 = false
-local err, input1, input2, ip1Num, ip2Num;
-while not status1 do
-  io.write('- Write first IPv4: ')
-  input1 = io.read()
-  status1, err = pcall(ip4Validation, input1)
-  if not status1 then
-    print(err)
+local function numberBetweenIps(ip1, ip2, isIPv4)
+  local ips1Table = splitIp(ip1, isIPv4)
+  local ips2Table = splitIp(ip2, isIPv4)
+  local diffIndex = 0
+  local numDiff = 0
+  local multiply = 1
+  local status, err
+  if isIPv4 then
+    for i = 1, 4 do
+      if (ips1Table[i] ~= ips2Table[i]) then
+        status, err = pcall(isSecondInputBigger, ips1Table[i], ips2Table[i])
+        diffIndex = i
+        break
+      end
+    end
+    if status then
+      for j = 4, diffIndex, -1 do
+        numDiff = numDiff + (ips2Table[j] - ips1Table[j]) * multiply
+        multiply = multiply * 256
+      end
+      print('--------------------------------------')
+      io.write('\27[32m- The number between ips is ', numDiff, '\27[0m\n')
+      print()
+      return true
+    else
+      print(err)
+      return false
+    end
   else
-    ip1Num = ipToInt(input1)
+    for i = 1, 8 do
+      if (ips1Table[i] ~= ips2Table[i]) then
+        status, err = pcall(isSecondInputBigger, ips1Table[i], ips2Table[i])
+        diffIndex = i
+        break
+      end
+    end
+    if status then
+      for j = 8, diffIndex, -1 do
+        numDiff = numDiff + (ips2Table[j] - ips1Table[j]) * multiply
+        multiply = multiply * math.pow(2, 16)
+      end
+      print('--------------------------------------')
+      io.write('\27[32m- The number between ips is ', numDiff, '\27[0m\n')
+      print()
+      return true
+    else
+      print(err)
+      return false
+    end
   end
 end
-while not status2 do
-  io.write('- Write second IPv4 (must be bigger): ')
-  input2 = io.read()
-  status2, err = pcall(ip4Validation, input2)
-  if not status2 then
-    print(err)
-  else
-    ip2Num = ipToInt(input2)
-    if ip1Num >= ip2Num then
-      print('\27[31m- please, write second IP bigger\27[0m')
-      status2 = false
+
+--Initializing program
+
+print()
+print('\27[36m---------------------------------------------------------------------------------------------------')
+print("It's a program that receives two IPv4 addresses and returns the number of addresses between them")
+print('---------------------------------------------------------------------------------------------------\27[0m')
+print()
+local isIPv4 = true
+local input0 = '0'
+while input0 == '0' do
+  print('\27[36mChoose IP version:')
+  print('[1] - IPv4')
+  print('[2] - IPv6\27[0m')
+  input0 = io.read()
+  if input0 == '2' then
+    isIPv4 = false
+    elseif input0 ~= '1' then
+      print('\27[31m- invalid input\27[0m')
+      print()
+      input0 = '0'
+  end
+end
+local status1 = false
+local status2 = false
+local err, input1, input2
+if input0 == '1' then
+  while not status1 do
+    io.write('- Write first IPv4: ')
+    input1 = io.read()
+    status1, err = pcall(ip4Validation, input1)
+    if not status1 then
+      print(err)
+    end
+  end
+  while not status2 do
+    io.write('- Write second IPv4: ')
+    input2 = io.read()
+    status2, err = pcall(ip4Validation, input2)
+    if not status2 then
+      print(err)
     else
-      numberBetweenIps(ip1Num, ip2Num)
+      status2 = numberBetweenIps(input1, input2, isIPv4)
+    end
+  end
+else
+  while not status1 do
+    io.write('- Write first IPv6 (without double colon shorthand): ')
+    input1 = io.read()
+    status1, err = pcall(ip6Validation, input1)
+    if not status1 then
+      print(err)
+    end
+  end
+  while not status2 do
+    io.write('- Write second IPv6 (without double colon shorthand): ')
+    input2 = io.read()
+    status2, err = pcall(ip6Validation, input2)
+    if not status2 then
+      print(err)
+    else
+      status2 = numberBetweenIps(input1, input2, isIPv4)
     end
   end
 end
