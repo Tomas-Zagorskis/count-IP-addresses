@@ -34,9 +34,20 @@ Ip validation
 param ip {string} An IP Address in the form a.b.c.d
 ]]
 
-local function ipValidation(ip)
+local function ip6Validation(ip)
+  if not string.match(ip, "^[%x]+:[%x]+:[%x]+:[%x]+:[%x]+:[%x]+:[%x]+:[%x]+$") then
+    error('\27[31m- invalid IPv6 format\27[0m', 2)
+  end
+  for str in string.gmatch(ip, "[%x]+") do
+    if string.len(str) > 4 then
+      error("\27[31m- invalid IPv6 format\27[0m", 2)
+    end
+  end
+end
+
+local function ip4Validation(ip)
   if not string.match(ip, "^[%d]+%.[%d]+%.[%d]+%.[%d]+$") then
-    error('\27[31m- invalid ip format\27[0m', 2)
+    error('\27[31m- invalid IPv4 format\27[0m', 2)
   end
   for str in string.gmatch(ip, "[%d]+") do
     if tonumber(str) > 255 then
@@ -65,7 +76,7 @@ local err, input1, input2, ip1Num, ip2Num;
 while not status1 do
   io.write('- Write first IPv4: ')
   input1 = io.read()
-  status1, err = pcall(ipValidation, input1)
+  status1, err = pcall(ip4Validation, input1)
   if not status1 then
     print(err)
   else
@@ -75,7 +86,7 @@ end
 while not status2 do
   io.write('- Write second IPv4 (must be bigger): ')
   input2 = io.read()
-  status2, err = pcall(ipValidation, input2)
+  status2, err = pcall(ip4Validation, input2)
   if not status2 then
     print(err)
   else
