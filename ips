@@ -70,61 +70,56 @@ param ip {string} An IP Address in the form 1:2:3:4:5:6:7:8
 --[[
 Calculates the number of IP addresses between the first one and the second.
   
-param ip1 {integer} a number of IP address.
-param ip2 {integer} a number of IP address.
-param isIPv4 {boolean} true - IPv4, false - IPv6
+param ips1Table {table} table of integers
+param ips2Table {table} table of integers
+param bitNum {number} 8 or 16 bit 
 return {boolean} if there is no error returns - true
 ]]
-
-local function numberBetweenIps(ip1, ip2, isIPv4)
-  local ips1Table = splitIp(ip1, isIPv4)
-  local ips2Table = splitIp(ip2, isIPv4)
+local function iterateIp(ips1Table, ips2Table, bitNum)
   local diffIndex = 0
   local numDiff = 0
   local multiply = 1
   local status, err
-  if isIPv4 then
-    for i = 1, 4 do
-      if (ips1Table[i] ~= ips2Table[i]) then
-        status, err = pcall(isSecondInputBigger, ips1Table[i], ips2Table[i])
-        diffIndex = i
-        break
-      end
+  for i = 1, #ips1Table do
+    if (ips1Table[i] ~= ips2Table[i]) then
+      status, err = pcall(isSecondInputBigger, ips1Table[i], ips2Table[i])
+      diffIndex = i
+      break
     end
-    if status then
-      for j = 4, diffIndex, -1 do
-        numDiff = numDiff + (ips2Table[j] - ips1Table[j]) * multiply
-        multiply = multiply * 256
-      end
-      print('--------------------------------------')
-      io.write('\27[32m- The number between ips is ', numDiff, '\27[0m\n')
-      print()
-      return true
-    else
-      print(err)
-      return false
+  end
+  if diffIndex == 0 then
+    print('\27[31m- please, write second IP bigger\27[0m')
+    return false
+  end
+  if status then
+    for j = #ips1Table, diffIndex, -1 do
+      numDiff = numDiff + (ips2Table[j] - ips1Table[j]) * multiply
+      multiply = multiply * 2 ^ bitNum
     end
+    print('--------------------------------------')
+    io.write('\27[32m- The number between ips is ', numDiff, '\27[0m\n')
+    print()
+    return true
   else
-    for i = 1, 8 do
-      if (ips1Table[i] ~= ips2Table[i]) then
-        status, err = pcall(isSecondInputBigger, ips1Table[i], ips2Table[i])
-        diffIndex = i
-        break
-      end
-    end
-    if status then
-      for j = 8, diffIndex, -1 do
-        numDiff = numDiff + (ips2Table[j] - ips1Table[j]) * multiply
-        multiply = multiply * math.pow(2, 16)
-      end
-      print('--------------------------------------')
-      io.write('\27[32m- The number between ips is ', numDiff, '\27[0m\n')
-      print()
-      return true
-    else
-      print(err)
-      return false
-    end
+    print(err)
+    return false
+  end
+end
+--[[
+Calculates the number of IP addresses between the first one and the second.
+  
+param ip1 {string} An IP Address
+param ip2 {string} An IP Address
+param isIPv4 {boolean} true - IPv4, false - IPv6
+return {boolean} if there is no error returns - true
+]]
+local function numberBetweenIps(ip1, ip2, isIPv4)
+  local ips1Table = splitIp(ip1, isIPv4)
+  local ips2Table = splitIp(ip2, isIPv4)
+  if isIPv4 then
+    return iterateIp(ips1Table, ips2Table, 8)
+  else
+    return iterateIp(ips1Table, ips2Table, 16)
   end
 end
 
@@ -132,11 +127,13 @@ end
 
 print()
 print('\27[36m---------------------------------------------------------------------------------------------------')
-print("It's a program that receives two IPv4 addresses and returns the number of addresses between them")
+print("It's a program that receives two IPv4 or IPv6 addresses and returns the number of addresses between them")
 print('---------------------------------------------------------------------------------------------------\27[0m')
 print()
 local isIPv4 = true
 local input0 = '0'
+
+-- Choice between IPv4 and IPv6
 while input0 == '0' do
   print('\27[36mChoose IP version:')
   print('[1] - IPv4')
@@ -150,9 +147,12 @@ while input0 == '0' do
       input0 = '0'
   end
 end
+
 local status1 = false
 local status2 = false
 local err, input1, input2
+
+-- Write IP addresses by chosen format
 if input0 == '1' then
   while not status1 do
     io.write('- Write first IPv4: ')
