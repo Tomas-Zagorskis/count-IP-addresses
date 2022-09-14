@@ -75,7 +75,7 @@ param ips2Table {table} table of integers
 param bitNum {number} 8 or 16 bit 
 return {boolean} if there is no error returns - true
 ]]
-local function iterateIp(ips1Table, ips2Table, bitNum)
+local function betweenIps(ips1Table, ips2Table, bitNum)
   local diffIndex = 0
   local numDiff = 0
   local multiply = 1
@@ -117,9 +117,9 @@ local function numberBetweenIps(ip1, ip2, isIPv4)
   local ips1Table = splitIp(ip1, isIPv4)
   local ips2Table = splitIp(ip2, isIPv4)
   if isIPv4 then
-    return iterateIp(ips1Table, ips2Table, 8)
+    return betweenIps(ips1Table, ips2Table, 8)
   else
-    return iterateIp(ips1Table, ips2Table, 16)
+    return betweenIps(ips1Table, ips2Table, 16)
   end
 end
 
