@@ -1,6 +1,6 @@
-# Count IPv4 Address
+# Count IPv4, IPv6 Address
 
-It's a program that receives two IPv4 addresses and returns the number of addresses between them
+It's a program that receives two IPv4 or IPv6 addresses and returns the number of addresses between them
 
 ## To tart program on Ubuntu
  Before the script can be run, it needs to be given execute permission. To do this run the “chmod” command in the directory with the file in it: `chmod +x ips`
